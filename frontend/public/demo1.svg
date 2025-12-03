@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 360 640">
+  <rect width="100%" height="100%" rx="20" fill="#0b0b0f" />
+  <rect x="16" y="40" width="328" height="240" rx="12" fill="#111827" />
+  <rect x="16" y="300" width="328" height="80" rx="8" fill="#1f2937" />
+  <rect x="16" y="392" width="120" height="140" rx="8" fill="#111827" />
+  <rect x="148" y="392" width="196" height="64" rx="8" fill="#111827" />
+  <text x="24" y="76" fill="#cbd5e1" font-size="12">Message from Alice — 09:42</text>
+  <text x="24" y="320" fill="#94a3b8" font-size="14">Shopping list • receipt • ticket</text>
+</svg>

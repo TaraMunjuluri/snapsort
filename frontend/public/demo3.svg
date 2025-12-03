@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 360 640">
+  <rect width="100%" height="100%" rx="20" fill="#0b0b0f" />
+  <rect x="16" y="40" width="328" height="520" rx="12" fill="#111827" />
+  <rect x="32" y="64" width="296" height="14" rx="6" fill="#374151" />
+  <rect x="32" y="90" width="220" height="14" rx="6" fill="#374151" />
+  <text x="24" y="320" fill="#94a3b8" font-size="14">Screenshot — recipe card</text>
+</svg>
