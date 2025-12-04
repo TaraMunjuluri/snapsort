@@ -32,4 +32,4 @@ source .env
 set +a
 
 echo "[INFO] Starting server at http://0.0.0.0:8000"
-exec uvicorn backend_server.app:app --host 0.0.0.0 --port 8000 --reload
+exec uvicorn app:app --host 0.0.0.0 --port 8000 --reload

@@ -5,9 +5,29 @@ import styles from "./upload.module.css";
 
 type Preview = { id: string; file: File; url: string };
 
+type Product = {
+  brand: string | null;
+  product_name: string;
+  price: string | null;
+};
+
+type ImageResult = {
+  filename: string;
+  type: string;
+  products: Product[];
+  error?: string;
+};
+
+type AnalyzeResponse = {
+  results: ImageResult[];
+};
+
 export default function UploadPage() {
   const [previews, setPreviews] = useState<Preview[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [results, setResults] = useState<ImageResult[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -28,7 +48,6 @@ export default function UploadPage() {
     setPreviews((prev) => {
       const remaining = 10 - prev.length;
       if (remaining <= 0) {
-        // gentle in-app notice
         return prev;
       }
       const toAdd = incoming.slice(0, remaining).map((file) => ({
@@ -61,6 +80,8 @@ export default function UploadPage() {
   const clearAll = () => {
     previews.forEach((p) => URL.revokeObjectURL(p.url));
     setPreviews([]);
+    setResults(null);
+    setError(null);
   };
 
   const removeOne = (id: string) => {
@@ -69,6 +90,37 @@ export default function UploadPage() {
       if (found) URL.revokeObjectURL(found.url);
       return prev.filter((p) => p.id !== id);
     });
+  };
+
+  const handleAnalyze = async () => {
+    if (previews.length === 0) return;
+
+    setIsAnalyzing(true);
+    setError(null);
+    setResults(null);
+
+    try {
+      const formData = new FormData();
+      previews.forEach((preview) => {
+        formData.append("files", preview.file);
+      });
+
+      const response = await fetch("http://localhost:8000/analyze", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data: AnalyzeResponse = await response.json();
+      setResults(data.results);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to analyze images");
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
@@ -116,21 +168,70 @@ export default function UploadPage() {
                 </div>
               ))}
             </div>
-            {/* top-right upload counter overlay */}
-            {previews.length > 0 && (
-              <div className="absolute right-0 -top-10 text-sm text-slate-400">{previews.length} / 10 uploaded</div>
-            )}
           </div>
 
+          {/* Error display */}
+          {error && (
+            <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg text-red-200 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Results display */}
+          {results && (
+            <div className="mt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold">Analysis Results</h2>
+                <button onClick={clearAll} className="text-sm text-slate-400 hover:text-slate-200">Clear All</button>
+              </div>
+              
+              {results.map((result, idx) => (
+                <div key={idx} className="rounded-xl bg-slate-800/50 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold text-slate-300">{result.filename}</div>
+                    <div className="text-xs text-slate-500 uppercase">{result.type}</div>
+                  </div>
+                  
+                  {result.error ? (
+                    <div className="text-sm text-red-400">{result.error}</div>
+                  ) : result.products.length > 0 ? (
+                    <div className="space-y-2">
+                      {result.products.map((product, pidx) => (
+                        <div key={pidx} className="bg-slate-900/50 rounded-lg p-3 space-y-1">
+                          {product.brand && (
+                            <div className="text-xs text-slate-400">{product.brand}</div>
+                          )}
+                          <div className="text-sm font-medium text-slate-200">{product.product_name}</div>
+                          {product.price && (
+                            <div className="text-sm font-bold text-green-400">{product.price}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-400">No products found</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* demo carousel showing what SnapSort does */}
-          <DemoShowcase />
+          {!results && <DemoShowcase />}
         </section>
       </main>
 
       {/* floating Continue button when images present */}
-      {previews.length > 0 && (
+      {previews.length > 0 && !results && (
         <div className={styles.continueFull}>
-          <button className={`${styles.continueFull} bg-gradient-to-r from-indigo-500 to-violet-500 text-white`} aria-label="Continue">Continue</button>
+          <button 
+            onClick={handleAnalyze}
+            disabled={isAnalyzing}
+            className={`${styles.continueFull} bg-gradient-to-r from-indigo-500 to-violet-500 text-white disabled:opacity-50 disabled:cursor-not-allowed`} 
+            aria-label="Continue"
+          >
+            {isAnalyzing ? "Analyzing..." : "Continue"}
+          </button>
         </div>
       )}
     </div>

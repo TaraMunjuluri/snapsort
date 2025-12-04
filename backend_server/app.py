@@ -6,6 +6,7 @@ import os
 from typing import List, Optional
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from openai import OpenAI
 from pydantic import BaseModel
 
@@ -57,6 +58,15 @@ JSON_SCHEMA = {
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = FastAPI(title="SnapSort backend", version="0.1.0")
+
+# CORS middleware to allow requests from the frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class ProductOut(BaseModel):
@@ -134,7 +144,3 @@ async def analyze(files: List[UploadFile] = File(..., description="1-10 images t
     tasks = [_analyze_file(upload) for upload in files]
     results = await asyncio.gather(*tasks)
     return AnalyzeResponse(results=results)
-
-
-# Local dev:
-# uvicorn backend_server.app:app --reload --host 0.0.0.0 --port 8000
